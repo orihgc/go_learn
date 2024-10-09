@@ -58,7 +58,7 @@ func form(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "before parse form %v\n", r.Form)
 }
 
-func test() {
+func main() {
 	http.HandleFunc("/body/once", readBodyOnce)
 	http.HandleFunc("/body/multi", getBodyIsNil)
 	http.HandleFunc("/query", queryParams)

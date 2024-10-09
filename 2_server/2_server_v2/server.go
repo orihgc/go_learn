@@ -13,13 +13,12 @@ type Server interface {
 
 type sdkHttpServer struct {
 	Name    string
-	handler *HandlerBasedMap
+	handler Handler
 }
 
 // Route 实现 Server 接口,注册路由
 func (s *sdkHttpServer) Route(method string, pattern string, handlerFunc func(context *Context)) {
-	key := s.handler.key(method, pattern)
-	s.handler.handlers[key] = handlerFunc
+	s.handler.Route(method, pattern, handlerFunc)
 }
 
 // Start 实现 Server 接口，
@@ -60,10 +59,8 @@ type signUpResponse struct {
 
 func NewHttpServer(name string) Server {
 	return &sdkHttpServer{
-		Name: name,
-		handler: &HandlerBasedMap{
-			handlers: make(map[string]func(context *Context)),
-		},
+		Name:    name,
+		handler: NewHandlerBasedMap(),
 	}
 }
 
