@@ -66,6 +66,10 @@ func NewHttpServer(name string) Server {
 
 func main() {
 	server := NewHttpServer("test-server")
-	server.Route("POST", "/signup", SignUp)
-	server.Start(":8080")
+	server.Route(http.MethodPost, "/signup", SignUp)
+	err := server.Start(":8080")
+	if err != nil {
+		panic(err)
+		return
+	}
 }
