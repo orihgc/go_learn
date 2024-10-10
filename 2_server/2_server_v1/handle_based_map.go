@@ -1,6 +1,9 @@
 package main
 
-import "net/http"
+import (
+	"net/http"
+	"sync"
+)
 
 type Routable interface {
 	Route(method string, pattern string, handler func(context *Context))
@@ -13,13 +16,13 @@ type Handler interface {
 
 type HandlerBasedMap struct {
 	//key 是method + url
-	handlers map[string]func(context *Context)
+	handlers sync.Map
 }
 
 func (h *HandlerBasedMap) ServeHTTP(c *Context) {
 	key := h.key(c.R.Method, c.R.URL.Path)
-	if handler, ok := h.handlers[key]; ok {
-		handler(c)
+	if handler, ok := h.handlers.Load(key); ok {
+		handler.(func(context *Context))(c)
 	} else {
 		c.W.WriteHeader(http.StatusNotFound)
 		_, _ = c.W.Write([]byte("not any router match"))
@@ -32,7 +35,7 @@ var _ Handler = &HandlerBasedMap{}
 
 func (h *HandlerBasedMap) Route(method string, pattern string, handlerFunc func(context *Context)) {
 	key := h.key(method, pattern)
-	h.handlers[key] = handlerFunc
+	h.handlers.Store(key, handlerFunc)
 }
 
 func (h *HandlerBasedMap) key(method string, path string) string {
@@ -40,7 +43,5 @@ func (h *HandlerBasedMap) key(method string, path string) string {
 }
 
 func NewHandlerBasedMap() Handler {
-	return &HandlerBasedMap{
-		handlers: make(map[string]func(context *Context)),
-	}
+	return &HandlerBasedMap{}
 }
