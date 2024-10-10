@@ -6,7 +6,7 @@ import (
 )
 
 type Routable interface {
-	Route(method string, pattern string, handler func(context *Context))
+	Route(method string, pattern string, handler handlerFunc)
 }
 
 type Handler interface {
@@ -22,7 +22,7 @@ type HandlerBasedMap struct {
 func (h *HandlerBasedMap) ServeHTTP(c *Context) {
 	key := h.key(c.R.Method, c.R.URL.Path)
 	if handler, ok := h.handlers.Load(key); ok {
-		handler.(func(context *Context))(c)
+		handler.(handlerFunc)(c)
 	} else {
 		c.W.WriteHeader(http.StatusNotFound)
 		_, _ = c.W.Write([]byte("not any router match"))
@@ -33,7 +33,7 @@ func (h *HandlerBasedMap) ServeHTTP(c *Context) {
 // 一种常用的go设计模式，用于确保HandlerBasedMap实现了Handler接口
 var _ Handler = &HandlerBasedMap{}
 
-func (h *HandlerBasedMap) Route(method string, pattern string, handlerFunc func(context *Context)) {
+func (h *HandlerBasedMap) Route(method string, pattern string, handlerFunc handlerFunc) {
 	key := h.key(method, pattern)
 	h.handlers.Store(key, handlerFunc)
 }

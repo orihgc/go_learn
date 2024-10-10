@@ -62,7 +62,8 @@ type signUpResponse struct {
 }
 
 func NewHttpServer(name string, filters ...FilterBuilder) Server {
-	handler := NewHandlerBasedMap()
+	handler := NewHandlerBasedOnTree()
+	//handler := NewHandlerBasedMap()
 	var root Filter = handler.ServeHTTP
 	for i := len(filters) - 1; i >= 0; i-- {
 		builder := filters[i]
