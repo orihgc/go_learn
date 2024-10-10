@@ -14,6 +14,7 @@ type Server interface {
 type sdkHttpServer struct {
 	Name    string
 	handler Handler
+	root    Filter
 }
 
 // Route 实现 Server 接口,注册路由
@@ -23,7 +24,10 @@ func (s *sdkHttpServer) Route(method string, pattern string, handlerFunc func(co
 
 // Start 实现 Server 接口，
 func (s *sdkHttpServer) Start(address string) error {
-	http.Handle("/", s.handler)
+	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+		c := NewContext(writer, request)
+		s.root(c)
+	})
 	return http.ListenAndServe(address, nil)
 }
 
@@ -57,15 +61,22 @@ type signUpResponse struct {
 	ID int64 `json:"id"`
 }
 
-func NewHttpServer(name string) Server {
+func NewHttpServer(name string, filters ...FilterBuilder) Server {
+	handler := NewHandlerBasedMap()
+	var root Filter = handler.ServeHTTP
+	for i := len(filters) - 1; i >= 0; i-- {
+		builder := filters[i]
+		root = builder(root)
+	}
 	return &sdkHttpServer{
 		Name:    name,
-		handler: NewHandlerBasedMap(),
+		handler: handler,
+		root:    root,
 	}
 }
 
 func main() {
-	server := NewHttpServer("test-server")
+	server := NewHttpServer("test-server", MetricsFilterBuilder)
 	server.Route(http.MethodPost, "/signup", SignUp)
 	err := server.Start(":8080")
 	if err != nil {

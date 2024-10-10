@@ -7,7 +7,7 @@ type Routable interface {
 }
 
 type Handler interface {
-	http.Handler
+	ServeHTTP(context *Context)
 	Routable
 }
 
@@ -16,13 +16,13 @@ type HandlerBasedMap struct {
 	handlers map[string]func(context *Context)
 }
 
-func (h *HandlerBasedMap) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	key := h.key(r.Method, r.URL.Path)
+func (h *HandlerBasedMap) ServeHTTP(c *Context) {
+	key := h.key(c.R.Method, c.R.URL.Path)
 	if handler, ok := h.handlers[key]; ok {
-		handler(NewContext(w, r))
+		handler(c)
 	} else {
-		w.WriteHeader(http.StatusNotFound)
-		_, _ = w.Write([]byte("not any router match"))
+		c.W.WriteHeader(http.StatusNotFound)
+		_, _ = c.W.Write([]byte("not any router match"))
 		return
 	}
 }
