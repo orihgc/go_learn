@@ -5,6 +5,8 @@ package main
 
 var a = "hello"
 
+const External = "包外可访问"
+
 func main() {
 	a := "hh"
 	println(a)
